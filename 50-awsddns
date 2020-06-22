@@ -1,0 +1,7 @@
+# awsddns dhcpcd hook
+
+case "$reason" in
+BOUND6|RENEW6|REBIND6|REBOOT6|INFORM6)
+    awsddns.sh
+    ;;
+esac

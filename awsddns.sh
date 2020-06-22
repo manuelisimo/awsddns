@@ -20,16 +20,23 @@ if [[ -f "/etc/awsddns.conf" ]]; then
     . /etc/awsddns.conf
 fi
 
-IP=$(ip -j -6 address show scope global | jq -r '[.[].addr_info[] | select(has("local") and .dynamic)][0].local')
-
-if [ ! -f "$IPFILE" ]
-    then
-    touch "$IPFILE"
+if [[ -f "${HOME}/.config/awsddns/awsddns.conf" ]]; then
+    . ${HOME}/.config/awsddns/awsddns.conf
 fi
 
-if grep -Fxq "$IP" "$IPFILE"; then
-    echo "IP is still $IP. Exiting" >> "$LOGFILE"
-    exit 0
+if [[ -z ${LOGFILE} ]]; then
+    LOGFILE=/dev/stdout
+fi
+
+if [[ ! -f "${LOGFILE}" ]]; then
+    touch "${LOGFILE}"
+fi
+
+if [[ ! -z $(which ip) ]]; then
+    IP=$(ip -j -6 address show scope global | jq -r '[.[].addr_info[] | select(has("local") and .dynamic)][0].local')
+else
+    # TODO: figure out a more portable way for OSX 
+    IP=$(ifconfig | grep inet6 | grep dynamic | cut -f 2 -d ' ')
 fi
 
 changes='{"Comment":"","Changes":[]}'
@@ -45,9 +52,12 @@ do
   changes=$(echo "${changes}" | jq ".Changes[${i}] = ${this_change}")
 done
 
-echo "${changes}" | jq
+# Write json to temp file
+TMPFILE=$(mktemp)
+echo "${changes}" > ${TMPFILE}
+
 # Update the Hosted Zone record
-#aws route53 change-resource-record-sets \
-#    --hosted-zone-id ${ZONEID} \
-#    --change-batch file://"${TMPFILE}" >> "${LOGFILE}"
-#echo "" >> "${LOGFILE}"
+aws route53 change-resource-record-sets \
+   --hosted-zone-id ${ZONEID} \
+   --change-batch file://"${TMPFILE}" >> "${LOGFILE}"
+echo "" >> "${LOGFILE}"
