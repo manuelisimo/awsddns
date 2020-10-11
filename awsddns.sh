@@ -6,12 +6,12 @@ function usage
   echo "Usage: awsddns.sh"
 }
 
-if [[ $(which aws) ]]; then
+if [[ ! $(which aws) ]]; then
   echo "This script requires the aws cli"
   exit 1
 fi
 
-if [[ $(which jq) ]]; then
+if [[ ! $(which jq) ]]; then
   echo "This script requires jq"
   exit 1
 fi
@@ -32,7 +32,7 @@ if [[ ! -f "${LOGFILE}" ]]; then
     touch "${LOGFILE}"
 fi
 
-if [[ ! $(which ip) ]]; then
+if [[ $(which ip) ]]; then
     IP=$(ip -j -6 address show scope global | jq -r '[.[].addr_info[] | select(has("local") and .dynamic)][0].local')
 else
     # TODO: figure out a more portable way for OSX 
