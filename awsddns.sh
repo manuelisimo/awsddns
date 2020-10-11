@@ -47,7 +47,7 @@ changes=$(echo "${changes}" | jq ".Comment |= \"${COMMENT}\"")
 for i in "${!RECORDSETS[@]}"
 do
   existing=$(dig ${RECORDSETS[$i]} AAAA | grep ^${RECORDSETS[$i]} | cut -f 5)
-  if [[ $existing eq $IP ]]; then
+  if [[ "$existing" == "$IP" ]]; then
       echo "Ip is already $existing" >> ${LOGFILE}
       continue
   fi
