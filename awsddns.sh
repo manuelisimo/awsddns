@@ -6,12 +6,12 @@ function usage
   echo "Usage: awsddns.sh"
 }
 
-if [[ -z $(which aws) ]]; then
+if [[ $(which aws) ]]; then
   echo "This script requires the aws cli"
   exit 1
 fi
 
-if [[ -z $(which jq) ]]; then
+if [[ $(which jq) ]]; then
   echo "This script requires jq"
   exit 1
 fi
@@ -32,7 +32,7 @@ if [[ ! -f "${LOGFILE}" ]]; then
     touch "${LOGFILE}"
 fi
 
-if [[ ! -z $(which ip) ]]; then
+if [[ ! $(which ip) ]]; then
     IP=$(ip -j -6 address show scope global | jq -r '[.[].addr_info[] | select(has("local") and .dynamic)][0].local')
 else
     # TODO: figure out a more portable way for OSX 
@@ -46,6 +46,11 @@ changes=$(echo "${changes}" | jq ".Comment |= \"${COMMENT}\"")
 
 for i in "${!RECORDSETS[@]}"
 do
+  existing=$(dig ${RECORDSETS[$i]} AAAA | grep ^${RECORDSETS[$i]} | cut -f 5)
+  if [[ $existing eq $IP ]]; then
+      echo "Ip is already $existing" >> ${LOGFILE}
+      continue
+  fi
   this_change=$(echo "${change}" | jq ".ResourceRecordSet.ResourceRecords[0].Value = \"${IP}\"")
   this_change=$(echo "${this_change}" | jq ".ResourceRecordSet.Type = \"AAAA\"")
   this_change=$(echo "${this_change}" | jq ".ResourceRecordSet.Name = \"${RECORDSETS[$i]}\"")
