@@ -6,12 +6,12 @@ function usage
   echo "Usage: awsddns.sh"
 }
 
-if [[ ! $(which aws) ]]; then
+if [[ ! $(command -v aws) ]]; then
   echo "This script requires the aws cli"
   exit 1
 fi
 
-if [[ ! $(which jq) ]]; then
+if [[ ! $(command -v jq) ]]; then
   echo "This script requires jq"
   exit 1
 fi
@@ -32,7 +32,7 @@ if [[ ! -f "${LOGFILE}" ]]; then
     touch "${LOGFILE}"
 fi
 
-if [[ $(which ip) ]]; then
+if [[ $(command -v ip) ]]; then
     IP=$(ip -j -6 address show scope global | jq -r '[.[].addr_info[] | select(has("local") and .dynamic)][0].local')
 else
     # TODO: figure out a more portable way for OSX 
@@ -59,6 +59,11 @@ done
 
 # Write json to temp file
 TMPFILE=$(mktemp)
+canges_length=$(echo "${changes}" | jq '.Changes | length')
+if [[ -z $changes_length ]]; then
+    echo "No changes to apply"
+    exit
+fi
 echo "${changes}" > ${TMPFILE}
 
 # Update the Hosted Zone record
