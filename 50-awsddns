@@ -1,7 +1,15 @@
 #!/bin/bash
 
-# Runs awsddns.sh to check if we need to update the DNS
+# Load config to get Log File location
+if [[ -f "/etc/awsddns.conf" ]]; then
+    . /etc/awsddns.conf
+fi
 
+if [[ -f "${HOME}/.config/awsddns/awsddns.conf" ]]; then
+    . ${HOME}/.config/awsddns/awsddns.conf
+fi
+
+# Runs awsddns.sh to check if we need to update the DNS
 if [[ "$2" == "dhcp6-change" ]]; then
-    awsddns.sh
+    awsddns.sh  >> ${LOGFILE}
 fi
